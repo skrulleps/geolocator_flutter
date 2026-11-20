@@ -107,6 +107,17 @@ The workflow in `.github/workflows/ci.yml` runs on every pull request targeting
 5. On a push/merge to `main`, creates a GitHub Release tagged with the same
    version as the app, for example `v1.0.0+1`, and attaches the production APK
    and AAB. Dev and staging builds remain available as workflow artifacts only.
+   The release body is taken from the matching version section in
+   `CHANGELOG.md`, falling back to the `Unreleased` section.
+
+Changelog entries are managed with [Cider](https://pub.dev/packages/cider):
+
+```bash
+cider log added "New feature"
+cider log changed "Behaviour change"
+cider log fixed "Bug fix"
+cider release   # moves Unreleased to the current pubspec version
+```
 
 To release a new version, update `version:` in `pubspec.yaml` in the pull
 request. Android `versionName` and `versionCode` are already derived from that

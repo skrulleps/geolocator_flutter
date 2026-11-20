@@ -144,21 +144,57 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Build release notes from CHANGELOG.md
+        if: matrix.flavor == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          APP_VERSION: ${{ needs.version.outputs.version }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          extract_section() {
+            local heading="$1"
+            awk -v heading="$heading" '
+              /^## / {
+                if (found) exit
+                line = substr($0, 4)
+                if (index(line, heading) == 1) { found = 1; next }
+              }
+              found { print }
+            ' CHANGELOG.md
+          }
+
+          extract_section "$APP_VERSION" > release_notes.md
+
+          if [ ! -s release_notes.md ]; then
+            echo "No CHANGELOG.md section for $APP_VERSION, falling back to Unreleased." >&2
+            extract_section "Unreleased" > release_notes.md
+          fi
+
+          if [ ! -s release_notes.md ]; then
+            echo "No changelog content found for $APP_VERSION or Unreleased." >&2
+            exit 1
+          fi
+
+          {
+            cat release_notes.md
+            printf '\n\n---\n'
+            printf -- '- Version source: `pubspec.yaml`\n'
+            printf -- '- Commit: `%s`\n' "$COMMIT_SHA"
+            printf -- '- Artifacts: production release APK and Android App Bundle (AAB)\n\n'
+            printf 'Development and staging builds are available as workflow artifacts.\n'
+          } > release_body.md
+
+          cat release_body.md
+
       - name: Create GitHub release
         if: matrix.flavor == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.version.outputs.tag }}
           name: ${{ needs.version.outputs.tag }}
-          body: |
-            GPS Tracking MVP release `${{ needs.version.outputs.version }}`.
-
-            - Version source: `pubspec.yaml`
-            - Commit: `${{ github.sha }}`
-            - Artifacts: production release APK and Android App Bundle (AAB)
-
-            Development and staging builds are available as workflow artifacts.
-            This release was built automatically after merging to `main`.
+          body_path: release_body.md
           files: |
             build/app/outputs/flutter-apk/app-production-release.apk
             build/app/outputs/bundle/productionRelease/app-production-release.aab
