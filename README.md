@@ -48,7 +48,29 @@ flutter run
 flutter analyze
 flutter test
 flutter build apk --debug
+flutter build apk --release
+flutter build appbundle --release
 ```
+
+## CI/CD and versioning
+
+The workflow in `.github/workflows/ci.yml` runs on every pull request targeting
+`main` and on every push to `main`:
+
+1. Reads the application version from `version:` in `pubspec.yaml`.
+2. Runs Floor code generation, `flutter analyze`, and `flutter test`.
+3. Builds a release APK and release Android App Bundle.
+4. Uploads both files as workflow artifacts.
+5. On a push/merge to `main`, creates a GitHub Release tagged with the same
+   version as the app, for example `v1.0.0+1`, and attaches the APK and AAB.
+
+To release a new version, update `version:` in `pubspec.yaml` in the pull
+request. Android `versionName` and `versionCode` are already derived from that
+same value, so the app and the GitHub Release always stay in sync.
+
+The release build currently uses the debug signing configuration defined in
+`android/app/build.gradle.kts`. Configure a production keystore before
+publishing to Google Play.
 
 ## Known limitations
 

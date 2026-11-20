@@ -46,3 +46,7 @@ app.*.map.json
 
 # Project documentation
 docs/
+
+# JVM crash dumps
+hs_err_pid*.log
+*.hprof
