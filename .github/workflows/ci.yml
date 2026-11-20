@@ -88,12 +88,22 @@ jobs:
           retention-days: 7
 
   build-release:
-    name: Build Android release
+    name: Build Android release (${{ matrix.flavor }})
     needs: [quality, version]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     permissions:
       contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flavor: dev
+            entrypoint: lib/main_dev.dart
+          - flavor: staging
+            entrypoint: lib/main_staging.dart
+          - flavor: production
+            entrypoint: lib/main_production.dart
 
     steps:
       - name: Check out repository
@@ -119,23 +129,23 @@ jobs:
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Build release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --flavor ${{ matrix.flavor }} -t ${{ matrix.entrypoint }}
 
       - name: Build release App Bundle
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --flavor ${{ matrix.flavor }} -t ${{ matrix.entrypoint }}
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: android-release-${{ needs.version.outputs.tag }}
+          name: android-${{ matrix.flavor }}-${{ needs.version.outputs.tag }}
           path: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/bundle/release/app-release.aab
+            build/app/outputs/flutter-apk/app-${{ matrix.flavor }}-release.apk
+            build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab
           if-no-files-found: error
           retention-days: 14
 
       - name: Create GitHub release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: matrix.flavor == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.version.outputs.tag }}
@@ -145,12 +155,13 @@ jobs:
 
             - Version source: `pubspec.yaml`
             - Commit: `${{ github.sha }}`
-            - Artifacts: release APK and Android App Bundle (AAB)
+            - Artifacts: production release APK and Android App Bundle (AAB)
 
+            Development and staging builds are available as workflow artifacts.
             This release was built automatically after merging to `main`.
           files: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/bundle/release/app-release.aab
+            build/app/outputs/flutter-apk/app-production-release.apk
+            build/app/outputs/bundle/productionRelease/app-production-release.aab
           fail_on_unmatched_files: true
           draft: false
           prerelease: false

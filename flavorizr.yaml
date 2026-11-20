@@ -1,0 +1,31 @@
+flavors:
+  dev:
+    app:
+      name: "GPS Tracking Dev"
+    android:
+      applicationId: "com.example.geolocator_app.dev"
+    ios:
+      bundleId: "com.example.geolocatorApp.dev"
+
+  staging:
+    app:
+      name: "GPS Tracking Staging"
+    android:
+      applicationId: "com.example.geolocator_app.staging"
+    ios:
+      bundleId: "com.example.geolocatorApp.staging"
+
+  production:
+    app:
+      name: "GPS Tracking"
+    android:
+      applicationId: "com.example.geolocator_app"
+    ios:
+      bundleId: "com.example.geolocatorApp"
+
+# Android is generated on Windows. On macOS, run the iOS processors explicitly
+# after the iOS project has generated its Podfile (see README).
+instructions:
+  - android:androidManifest
+  - android:flavorizrGradle
+  - android:buildGradle

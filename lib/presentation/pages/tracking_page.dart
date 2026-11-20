@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:geolocator_app/domain/models/location_model.dart';
+import 'package:geolocator_app/flavors.dart';
 import 'package:geolocator_app/presentation/controllers/tracking_controller.dart';
 
 class TrackingPage extends StatefulWidget {
@@ -25,7 +26,7 @@ class _TrackingPageState extends State<TrackingPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('GPS Tracking MVP'),
+        title: Text(F.title),
         actions: [
           IconButton(
             tooltip: 'Reload location history',

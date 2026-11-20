@@ -8,12 +8,13 @@ import 'package:geolocator_app/data/mappers/location_mapper.dart';
 import 'package:geolocator_app/data/repositories/location_repository_impl.dart';
 import 'package:geolocator_app/domain/datasources/location_remote_datasource.dart';
 import 'package:geolocator_app/domain/repositories/location_repository.dart';
+import 'package:geolocator_app/flavors.dart';
 
 var _locator = GetIt.instance;
 
 Future<void> dbModule() async {
   final database = await $FloorAppDatabase
-      .databaseBuilder('gps_tracking.db')
+      .databaseBuilder('gps_tracking_${F.name}.db')
       .build();
 
   _locator.registerSingleton<AppDatabase>(database);

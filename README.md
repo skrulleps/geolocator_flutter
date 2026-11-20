@@ -34,12 +34,54 @@ Cache (Floor entities, DAO, database)
 Dependency injection is centralized in `lib/di`. See `docs/ARCHITECTURE.md` for
 the full structure and rules.
 
+## Flavors
+
+The app has three flavors, defined in `flavorizr.yaml`:
+
+| Flavor | Entry point | Android applicationId | iOS bundle ID |
+| --- | --- | --- | --- |
+| `dev` | `lib/main_dev.dart` | `com.example.geolocator_app.dev` | `com.example.geolocatorApp.dev` |
+| `staging` | `lib/main_staging.dart` | `com.example.geolocator_app.staging` | `com.example.geolocatorApp.staging` |
+| `production` | `lib/main_production.dart` | `com.example.geolocator_app` | `com.example.geolocatorApp` |
+
+Run a flavor with:
+
+```bash
+flutter run --flavor dev -t lib/main_dev.dart
+flutter run --flavor staging -t lib/main_staging.dart
+flutter run --flavor production -t lib/main_production.dart
+```
+
+Each flavor uses its own local database (`gps_tracking_<flavor>.db`), so dev,
+staging, and production data do not mix on the same device. Flavor names and
+titles live in `lib/flavors.dart`.
+
+Android configuration is generated into `android/app/flavorizr.gradle.kts` and
+wired from `android/app/build.gradle.kts`. If you change `flavorizr.yaml`,
+regenerate only the Android processors on Windows:
+
+```bash
+dart run flutter_flavorizr -f
+```
+
+> **AGP 9 note:** FlutterFlavorizr 2.6.0 emits a Gradle script based on the
+> legacy `AppExtension`. This project uses the Android Gradle Plugin 9 DSL, so
+> `android/app/flavorizr.gradle.kts` has been adapted to use
+> `ApplicationExtension` plus an explicit `buildFeatures { resValues = true }`.
+> If you regenerate it, re-apply that adaptation before building. The checked-in
+> version is the working configuration.
+
+iOS configuration requires macOS because FlutterFlavorizr also regenerates the
+Xcode schemes and the Podfile. On a Mac, run the full default processor set with
+`dart run flutter_flavorizr -f` (or `flutter pub run flutter_flavorizr`) after
+`flutter pub get`, then verify the generated schemes in Xcode.
+
 ## Getting started
 
 ```bash
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
-flutter run
+flutter run --flavor dev -t lib/main_dev.dart
 ```
 
 ## Validation
@@ -47,9 +89,9 @@ flutter run
 ```bash
 flutter analyze
 flutter test
-flutter build apk --debug
-flutter build apk --release
-flutter build appbundle --release
+flutter build apk --debug --flavor dev -t lib/main_dev.dart
+flutter build apk --release --flavor production -t lib/main_production.dart
+flutter build appbundle --release --flavor production -t lib/main_production.dart
 ```
 
 ## CI/CD and versioning
@@ -59,10 +101,12 @@ The workflow in `.github/workflows/ci.yml` runs on every pull request targeting
 
 1. Reads the application version from `version:` in `pubspec.yaml`.
 2. Runs Floor code generation, `flutter analyze`, and `flutter test`.
-3. Builds a release APK and release Android App Bundle.
-4. Uploads both files as workflow artifacts.
+3. Builds a release APK and release Android App Bundle for `dev`, `staging`,
+   and `production` in parallel.
+4. Uploads each flavor's files as workflow artifacts.
 5. On a push/merge to `main`, creates a GitHub Release tagged with the same
-   version as the app, for example `v1.0.0+1`, and attaches the APK and AAB.
+   version as the app, for example `v1.0.0+1`, and attaches the production APK
+   and AAB. Dev and staging builds remain available as workflow artifacts only.
 
 To release a new version, update `version:` in `pubspec.yaml` in the pull
 request. Android `versionName` and `versionCode` are already derived from that
