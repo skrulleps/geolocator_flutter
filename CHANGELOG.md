@@ -4,6 +4,7 @@
 - Menambahkan konfigurasi flavorizr.yaml dan android/app/flavorizr.gradle.kts untuk applicationId, app name, serta bundle ID per flavor
 - Mengisolasi database lokal per flavor melalui gps\_tracking\_<flavor>.db
 - CI membangun APK dan AAB release untuk setiap flavor secara paralel
+- Added Listview builder for List tile of Location
 
 ### Changed
 - Bootstrap aplikasi sekarang menerima parameter Flavor dan judul aplikasi mengikuti flavor aktif

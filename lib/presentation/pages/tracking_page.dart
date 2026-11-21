@@ -50,6 +50,7 @@ class _TrackingPageState extends State<TrackingPage> {
 
         final initialCenter =
             mapPoints.isNotEmpty ? mapPoints.last : _defaultCenter;
+        final reversedLocations = locations.reversed.toList(growable: false);
 
         _followLatestPoint(initialCenter, mapPoints.isNotEmpty);
 
@@ -164,9 +165,17 @@ class _TrackingPageState extends State<TrackingPage> {
                     if (locations.isEmpty)
                       const Text('No location data yet')
                     else
-                      ...locations.reversed.take(5).map(
-                            (location) => _buildLocationItem(location),
-                          ),
+
+
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: reversedLocations.length,
+                      itemBuilder: (context, index) {
+                        final location = reversedLocations[index];
+                        return _buildLocationItem(location);
+                      },
+                    ),
                   ],
                 ),
               ),
